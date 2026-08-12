@@ -1,0 +1,14 @@
+{
+  "name": "ai-instagram-automation",
+  "description": "Daily AI Instagram news automation — researches, generates, and publishes 5 AI carousel posts every day",
+  "schedule": "0 8 * * *",
+  "command": "python H:\\AgenticAI\\main_pipeline.py --live",
+  "workingDirectory": "H:\\AgenticAI",
+  "enabled": true,
+  "timezone": "Asia/Kolkata",
+  "environment": {
+    "PYTHONPATH": "H:\\AgenticAI"
+  },
+  "onError": "log",
+  "logFile": "H:\\AgenticAI\\output\\automation.log"
+}

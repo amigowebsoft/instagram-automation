@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Database
+storage/*.db
+storage/*.db-journal
+storage/*.db-wal
+storage/ai_news.db
+
+# Python
+__pycache__/
+*.pyc
+
+# IDE / Agent configs
+.agents/
+.gemini/
+.vscode/
+
+# Rendered outputs
+output/
+output_*
+temp_carousel*

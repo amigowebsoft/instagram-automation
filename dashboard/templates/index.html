@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amigosoft Instagram Automation — Command Center</title>
+    <meta
+      name="description"
+      content="Autonomous AI Instagram news automation dashboard — research, generate, and publish daily AI carousel posts."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <!-- Background orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <!-- Top nav -->
+    <nav class="navbar">
+      <div class="nav-brand">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-title">Amigosoft Automation</span>
+        <span class="nav-sub">Command Center</span>
+      </div>
+      <div class="nav-right">
+        <div class="live-indicator" id="liveIndicator">
+          <span class="pulse-dot"></span>
+          <span id="liveLabel">Connecting...</span>
+        </div>
+        <div class="account-badge" id="accountBadge">—</div>
+      </div>
+    </nav>
+
+    <main class="main">
+      <!-- ── Row 1: Stats ── -->
+      <section class="stats-row" id="statsRow">
+        <div class="stat-card" id="statNewsCard">
+          <div class="stat-icon">📡</div>
+          <div class="stat-content">
+            <div class="stat-value" id="statNewsVal">—</div>
+            <div class="stat-label">News Fetched Today</div>
+          </div>
+          <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card accent-purple" id="statSelectedCard">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-content">
+            <div class="stat-value" id="statSelectedVal">—</div>
+            <div class="stat-label">Top 5 Selected</div>
+          </div>
+          <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card accent-pink" id="statPublishedCard">
+          <div class="stat-icon">✅</div>
+          <div class="stat-content">
+            <div class="stat-value" id="statPublishedVal">—</div>
+            <div class="stat-label">Published Today</div>
+          </div>
+          <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card accent-gold" id="statReachCard">
+          <div class="stat-icon">🚀</div>
+          <div class="stat-content">
+            <div class="stat-value" id="statReachVal">—</div>
+            <div class="stat-label">Total Reach</div>
+          </div>
+          <div class="stat-glow"></div>
+        </div>
+        <div class="stat-card accent-green" id="statEngCard">
+          <div class="stat-icon">💎</div>
+          <div class="stat-content">
+            <div class="stat-value" id="statEngVal">—</div>
+            <div class="stat-label">Avg Engagement</div>
+          </div>
+          <div class="stat-glow"></div>
+        </div>
+      </section>
+
+      <!-- ── Row 2: Schedule + Controls ── -->
+      <section class="row-2">
+        <!-- Schedule card -->
+        <div class="glass-card schedule-card">
+          <div class="card-header">
+            <span class="card-icon">⏰</span>
+            <h2 class="card-title">Next Publish</h2>
+          </div>
+          <div class="countdown-display">
+            <div class="countdown-time" id="countdownTimer">00:00:00</div>
+            <div class="countdown-label">until 9:00 AM auto-post</div>
+          </div>
+          <div class="schedule-detail">
+            <div class="schedule-row">
+              <span class="sch-time">08:00</span>
+              <span class="sch-icon">📡</span>
+              <span class="sch-task">AI news research</span>
+            </div>
+            <div class="schedule-row">
+              <span class="sch-time">08:15</span>
+              <span class="sch-icon">✍️</span>
+              <span class="sch-task">Generate carousel content</span>
+            </div>
+            <div class="schedule-row">
+              <span class="sch-time">08:30</span>
+              <span class="sch-icon">🎨</span>
+              <span class="sch-task">Render slide images</span>
+            </div>
+            <div class="schedule-row">
+              <span class="sch-time">08:45</span>
+              <span class="sch-icon">☁️</span>
+              <span class="sch-task">Upload to Cloudinary</span>
+            </div>
+            <div class="schedule-row active">
+              <span class="sch-time">09:00</span>
+              <span class="sch-icon">📤</span>
+              <span class="sch-task">Publish 5 carousels</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls card -->
+        <div class="glass-card controls-card">
+          <div class="card-header">
+            <span class="card-icon">🎮</span>
+            <h2 class="card-title">Manual Controls</h2>
+          </div>
+          <div class="controls-body">
+            <button
+              class="btn btn-primary"
+              id="btnDryRun"
+              onclick="triggerPipeline(false)"
+            >
+              <span class="btn-icon">🔵</span>
+              Run Dry Test
+            </button>
+            <button
+              class="btn btn-live"
+              id="btnLive"
+              onclick="triggerPipeline(true)"
+            >
+              <span class="btn-icon">🔴</span>
+              Run Live Now
+            </button>
+          </div>
+          <div class="run-status" id="runStatus"></div>
+          <div class="mode-badge" id="modeBadge">
+            <span class="mode-dot"></span>
+            <span id="modeLabel">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Analytics card -->
+        <div class="glass-card analytics-mini-card">
+          <div class="card-header">
+            <span class="card-icon">📊</span>
+            <h2 class="card-title">All-Time Analytics</h2>
+          </div>
+          <div class="analytics-grid" id="analyticsGrid">
+            <div class="metric-box">
+              <div class="metric-val" id="mLikes">—</div>
+              <div class="metric-lbl">Likes</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" id="mComments">—</div>
+              <div class="metric-lbl">Comments</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" id="mSaves">—</div>
+              <div class="metric-lbl">Saves</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-val" id="mReach">—</div>
+              <div class="metric-lbl">Total Reach</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Row 3: Top 5 News ── -->
+      <section class="glass-card full-card">
+        <div class="card-header">
+          <span class="card-icon">🔥</span>
+          <h2 class="card-title">Today's Top 5 AI News</h2>
+          <span class="card-badge" id="newsCount">0 articles</span>
+        </div>
+        <div class="news-list" id="newsList">
+          <div class="empty-state">Loading AI news...</div>
+        </div>
+      </section>
+
+      <!-- ── Row 4: Post Previews ── -->
+      <section class="glass-card full-card">
+        <div class="card-header">
+          <span class="card-icon">🎨</span>
+          <h2 class="card-title">Generated Carousel Posts</h2>
+          <span class="card-badge" id="postsCount">0 posts</span>
+        </div>
+        <div class="posts-grid" id="postsGrid">
+          <div class="empty-state">
+            No posts generated yet today. Run the pipeline to generate.
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Row 5: Publish Log ── -->
+      <section class="glass-card full-card">
+        <div class="card-header">
+          <span class="card-icon">📋</span>
+          <h2 class="card-title">Automation Log</h2>
+          <button class="btn-icon-sm" onclick="refreshLog()">↻ Refresh</button>
+        </div>
+        <div class="log-container" id="logContainer">
+          <div class="empty-state">No log entries yet.</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Slide Modal -->
+    <div class="modal-overlay" id="slideModal" onclick="closeModal(event)">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div class="modal-header" id="modalTitle">Post Preview</div>
+        <div class="slides-viewer" id="slidesViewer"></div>
+        <div class="modal-caption" id="modalCaption"></div>
+        <div class="modal-hashtags" id="modalHashtags"></div>
+      </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

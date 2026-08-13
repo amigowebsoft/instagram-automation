@@ -6,17 +6,65 @@ and returns the top 5 most viral and impactful updates.
 """
 
 import os
+import re
 import json
 import time
 import feedparser
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from google import genai
 
 load_dotenv()
 _client = genai.Client(api_key=os.getenv('GEMINI_API_KEY', ''))
+
+
+def _normalize_title(title: str) -> str:
+    """Normalize a title for fuzzy duplicate detection."""
+    # Lowercase, remove punctuation, strip source suffixes like '- TechCrunch'
+    t = title.lower()
+    t = re.sub(r'[-|].*$', '', t)          # Remove source suffix after dash/pipe
+    t = re.sub(r'[^a-z0-9 ]', '', t)       # Remove punctuation
+    t = re.sub(r'\s+', ' ', t).strip()     # Collapse spaces
+    return t
+
+
+def _titles_are_similar(t1: str, t2: str, threshold: float = 0.6) -> bool:
+    """Return True if two normalized titles share enough words to be considered duplicates."""
+    words1 = set(_normalize_title(t1).split())
+    words2 = set(_normalize_title(t2).split())
+    # Filter out very common stop words
+    stops = {'the','a','an','in','on','at','to','of','and','or','is','are',
+             'was','were','for','with','this','that','it','as','by','be',
+             'has','have','will','can','new','ai'}
+    words1 -= stops
+    words2 -= stops
+    if not words1 or not words2:
+        return False
+    intersection = words1 & words2
+    smaller = min(len(words1), len(words2))
+    return len(intersection) / smaller >= threshold
+
+
+def get_already_published_topics() -> list[str]:
+    """Return list of topics already published today (from DB)."""
+    try:
+        import sqlite3
+        from pathlib import Path
+        db_path = Path(__file__).parent.parent / 'storage' / 'ai_news.db'
+        if not db_path.exists():
+            return []
+        conn = sqlite3.connect(str(db_path))
+        today = date.today().isoformat()
+        rows = conn.execute(
+            "SELECT topic FROM posts WHERE post_date=? AND status IN ('published','uploaded','pending')",
+            (today,)
+        ).fetchall()
+        conn.close()
+        return [r[0] for r in rows]
+    except Exception:
+        return []
 
 # ─── RSS Feed Sources ──────────────────────────────────────────────────────────
 RSS_FEEDS = [
@@ -49,10 +97,10 @@ VIRAL_KEYWORDS = [
 
 
 def fetch_rss_feeds() -> list[dict]:
-    """Fetch articles from all RSS feeds. Returns raw article list."""
+    """Fetch articles from all RSS feeds. Returns raw article list with fuzzy dedup."""
     articles = []
     seen_urls = set()
-    seen_titles = set()
+    accepted_titles = []   # For fuzzy matching
     cutoff = datetime.now() - timedelta(hours=36)  # Only last 36 hours
 
     for feed_info in RSS_FEEDS:
@@ -66,12 +114,17 @@ def fetch_rss_feeds() -> list[dict]:
                 
                 if not title or len(title) < 10:
                     continue
-                    
-                if url in seen_urls or title.lower() in seen_titles:
+
+                if url in seen_urls:
                     continue
-                    
+
+                # Fuzzy title deduplication — skip near-duplicates
+                is_dup = any(_titles_are_similar(title, seen) for seen in accepted_titles)
+                if is_dup:
+                    continue
+
                 seen_urls.add(url)
-                seen_titles.add(title.lower())
+                accepted_titles.append(title)
 
                 # Parse publish date
                 pub_date = datetime.now()
@@ -106,7 +159,7 @@ def fetch_rss_feeds() -> list[dict]:
 
         time.sleep(0.3)  # Polite delay
 
-    print(f"[Research] Fetched {len(articles)} total articles")
+    print(f"[Research] Fetched {len(articles)} unique articles")
     return articles
 
 
@@ -224,16 +277,34 @@ Select articles from DIFFERENT companies/topics when possible for variety."""
 def run_research() -> list[dict]:
     """
     Full research pipeline:
-    1. Fetch articles from all RSS feeds
-    2. Quick keyword score filter
-    3. AI ranking to select top 5
+    1. Check already-published topics today (skip duplicates)
+    2. Fetch articles from all RSS feeds (fuzzy dedup)
+    3. Quick keyword score filter
+    4. AI ranking to select top 5
     Returns list of top 5 article dicts with scores.
     """
     print("[Research] Starting AI news research pipeline...")
+
+    # Get topics already published today to avoid re-posting
+    already_published = get_already_published_topics()
+    if already_published:
+        print(f"[Research] Skipping {len(already_published)} topics already posted today")
+
     articles = fetch_rss_feeds()
-    
+
+    # Filter out articles whose topics are similar to already-published ones
+    if already_published and articles:
+        filtered = []
+        for art in articles:
+            if any(_titles_are_similar(art['title'], pub) for pub in already_published):
+                print(f"[Research] Skipping already-posted: {art['title'][:60]}")
+                continue
+            filtered.append(art)
+        articles = filtered
+        print(f"[Research] {len(articles)} articles remain after filtering already-published")
+
     if not articles:
-        print("[Research] No articles fetched. Using fallback topics.")
+        print("[Research] No new articles found. Using fallback topics.")
         return get_fallback_topics()
     
     top5 = ai_rank_and_select(articles)

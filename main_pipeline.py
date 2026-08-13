@@ -151,13 +151,13 @@ def run_pipeline(dry_run: bool = True):
 
     # ── Summary ───────────────────────────────────────────────────
     elapsed = (datetime.now() - start).total_seconds()
-    print("\n" + "═" * 60)
+    print("\n" + "=" * 60)
     log(f"Pipeline complete in {elapsed:.0f}s", 'OK')
     log(f"Published: {published_count}/{len(results)} posts", 'OK')
     if dry_run:
         log("DRY RUN - No actual Instagram posts were made", 'WARN')
         log("Set LIVE_MODE=true in .env to enable live posting", 'INFO')
-    print("═" * 60 + "\n")
+    print("=" * 60 + "\n")
 
     return published_count > 0
 
